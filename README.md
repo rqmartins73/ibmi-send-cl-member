@@ -147,3 +147,10 @@ This prevents silent failures — if the SCP, SSH, or FTP step fails, the script
 | FTP `530 Login incorrect` | Wrong username or password | Verify the IBM i user profile and password |
 | FTP `put` fails | User lacks authority to `POWERHA/QCLSRC` | Grant `*CHANGE` with `GRTOBJAUT OBJ(POWERHA/QCLSRC) OBJTYPE(*FILE) USER(youruser) AUT(*CHANGE)` |
 | `ftp: command not found` | `ftp` not installed on WSL2 | Run `sudo apt install ftp` |
+
+---
+## Author
+
+Ricardo Martins  
+IBM Power Technical Leader @ Blue Chip Portugal  
+IBM Champion 2025 | 2026
