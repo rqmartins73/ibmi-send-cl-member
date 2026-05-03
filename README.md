@@ -1,6 +1,6 @@
 # send_cl_member.sh
 
-A Bash script that uploads a CL (Control Language) source file as a member into `QCLSRC` inside the `POWERHA` library on an IBM i LPAR (Logical Partition). It supports two transfer methods: **SSH** and **FTP**.
+A Bash script that uploads any source member into a source physical file on an IBM i LPAR. The target library and source physical file are passed as parameters, so the script is not limited to `QCLSRC` or any specific library. It supports two transfer methods: **SSH** and **FTP**.
 
 ---
 
@@ -13,10 +13,10 @@ A Bash script that uploads a CL (Control Language) source file as a member into 
 
 ### On the IBM i LPAR
 - **For SSH**: OpenSSH server running (`STRTCPSVR *SSHD`). Your user profile must have the public key listed in `~/.ssh/authorized_keys`. The IFS path `/tmp/` must be writable.
-- **For FTP**: FTP server running (`STRTCPSVR *FTP`). The FTP user must have `*CHANGE` authority to `POWERHA/QCLSRC`.
-- The source physical file `QCLSRC` must already exist in library `POWERHA`. If it does not, create it first with:
+- **For FTP**: FTP server running (`STRTCPSVR *FTP`). The FTP user must have `*CHANGE` authority to the target source physical file.
+- The target source physical file must already exist in the target library. If it does not, create it first with:
   ```
-  CRTSRCPF FILE(POWERHA/QCLSRC) RCDLEN(112)
+  CRTSRCPF FILE(<library>/<source-file>) RCDLEN(112)
   ```
 
 ---
@@ -24,7 +24,7 @@ A Bash script that uploads a CL (Control Language) source file as a member into 
 ## Usage
 
 ```bash
-./send_cl_member.sh <lpar-ip> <ssh-key-path> <member-name> <cl-source-file>
+./send_cl_member.sh <lpar-ip> <ssh-key-path> <member-name> <library> <source-file> <local-file>
 ```
 
 ### Parameters
@@ -33,13 +33,26 @@ A Bash script that uploads a CL (Control Language) source file as a member into 
 |---|-----------|-------------|---------|
 | 1 | `lpar-ip` | IP address or hostname of the IBM i LPAR | `192.168.1.10` |
 | 2 | `ssh-key-path` | Path to your SSH private key file | `~/.ssh/id_rsa` |
-| 3 | `member-name` | Name of the member to create/replace in `QCLSRC` | `MYPGM` |
-| 4 | `cl-source-file` | Path to the local CL source file to upload | `/home/user/mypgm.cl` |
+| 3 | `member-name` | Name of the member to create/replace | `MYPGM` |
+| 4 | `library` | IBM i library containing the source physical file | `MYLIB` |
+| 5 | `source-file` | Source physical file name on IBM i | `QCLSRC` |
+| 6 | `local-file` | Path to the local source file to upload | `/home/user/mypgm.cl` |
 
-### Example
+### Examples
 
+Send a CL member to `QCLSRC` in library `POWERHA`:
 ```bash
-./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa MYPGM /home/rqmartins/mypgm.cl
+./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa MYPGM POWERHA QCLSRC /home/rqmartins/mypgm.cl
+```
+
+Send an RPG member to `QRPGLESRC` in library `BLUEXLIB`:
+```bash
+./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa SALESRPT BLUEXLIB QRPGLESRC /home/rqmartins/salesrpt.rpgle
+```
+
+Send a CLLE member to a custom source file in a different library:
+```bash
+./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa BACKUP PRODLIB CLLESRC /home/rqmartins/backup.clle
 ```
 
 ---
@@ -48,9 +61,9 @@ A Bash script that uploads a CL (Control Language) source file as a member into 
 
 ### Validation
 Before doing anything, the script:
-- Checks that exactly 4 arguments were provided, and exits with usage instructions if not.
+- Checks that exactly 6 arguments were provided, and exits with usage instructions if not.
 - Verifies the SSH key file exists at the given path.
-- Verifies the CL source file exists at the given path.
+- Verifies the local source file exists at the given path.
 
 ---
 
@@ -61,7 +74,7 @@ This method uses SSH and SCP to transfer the file without exposing a password.
 **Step 1 — SCP upload to IFS**
 
 ```bash
-scp -i <ssh-key> <cl-source-file> <lpar-ip>:/tmp/<MEMBER>.CL
+scp -i <ssh-key> <local-file> <lpar-ip>:/tmp/<MEMBER>.MBR
 ```
 
 The source file is copied to the IBM i Integrated File System (IFS) under `/tmp/`. The IFS is a UNIX-like file system on IBM i that acts as a staging area before moving data into native DB2 objects like source physical files.
@@ -70,15 +83,15 @@ The source file is copied to the IBM i Integrated File System (IFS) under `/tmp/
 
 ```bash
 ssh -i <ssh-key> <lpar-ip> \
-  "system \"CPYFRMSTMF FROMSTMF('/tmp/MYPGM.CL') TOMBR('/QSYS.LIB/POWERHA.LIB/QCLSRC.FILE/MYPGM.MBR') MBROPT(*REPLACE) STMFCCSID(*STMF) DBFCCSID(*FILE)\""
+  "system \"CPYFRMSTMF FROMSTMF('/tmp/MYPGM.MBR') TOMBR('/QSYS.LIB/MYLIB.LIB/QCLSRC.FILE/MYPGM.MBR') MBROPT(*REPLACE) STMFCCSID(*STMF) DBFCCSID(*FILE)\""
 ```
 
 Once in the IFS, the IBM i command `CPYFRMSTMF` (Copy From Stream File) is executed remotely over SSH. It moves the file from the IFS into the source physical file member. Key parameters:
 
 | Parameter | Value | Meaning |
 |-----------|-------|---------|
-| `FROMSTMF` | `/tmp/MYPGM.CL` | Source stream file in the IFS |
-| `TOMBR` | `/QSYS.LIB/POWERHA.LIB/QCLSRC.FILE/MYPGM.MBR` | Target member in DB2 native path notation |
+| `FROMSTMF` | `/tmp/MYPGM.MBR` | Source stream file in the IFS |
+| `TOMBR` | `/QSYS.LIB/MYLIB.LIB/QCLSRC.FILE/MYPGM.MBR` | Target member in DB2 native path notation |
 | `MBROPT` | `*REPLACE` | Overwrites the member if it already exists |
 | `STMFCCSID` | `*STMF` | Uses the encoding declared in the stream file |
 | `DBFCCSID` | `*FILE` | Uses the encoding declared in the target source file |
@@ -93,7 +106,7 @@ This method uses the classic IBM i FTP interface. Because FTP does not support S
 ftp -n <lpar-ip>
 user <username> <password>
 quote SITE NAMEFMT 0
-put <cl-source-file> POWERHA/QCLSRC.<MEMBER>
+put <local-file> <LIBRARY>/<SOURCE-FILE>.<MEMBER>
 quit
 ```
 
@@ -142,13 +155,14 @@ This prevents silent failures — if the SCP, SSH, or FTP step fails, the script
 | Problem | Likely cause | Fix |
 |---------|-------------|-----|
 | `Permission denied (publickey)` | Public key not in IBM i `authorized_keys` | Add your public key to `~/.ssh/authorized_keys` on the LPAR |
-| `scp: /tmp/MYPGM.CL: Permission denied` | IFS `/tmp` not writable | Check IFS permissions or use a different IFS staging path |
-| `CPYFRMSTMF` error on member | `QCLSRC` does not exist in `POWERHA` | Run `CRTSRCPF FILE(POWERHA/QCLSRC)` on the IBM i first |
+| `scp: /tmp/MYPGM.MBR: Permission denied` | IFS `/tmp` not writable | Check IFS permissions or use a different IFS staging path |
+| `CPYFRMSTMF` error on member | Source physical file does not exist | Run `CRTSRCPF FILE(<library>/<source-file>)` on the IBM i first |
 | FTP `530 Login incorrect` | Wrong username or password | Verify the IBM i user profile and password |
-| FTP `put` fails | User lacks authority to `POWERHA/QCLSRC` | Grant `*CHANGE` with `GRTOBJAUT OBJ(POWERHA/QCLSRC) OBJTYPE(*FILE) USER(youruser) AUT(*CHANGE)` |
+| FTP `put` fails | User lacks authority to the target file | Grant `*CHANGE` with `GRTOBJAUT OBJ(<library>/<source-file>) OBJTYPE(*FILE) USER(<user>) AUT(*CHANGE)` |
 | `ftp: command not found` | `ftp` not installed on WSL2 | Run `sudo apt install ftp` |
 
 ---
+
 ## Author
 
 Ricardo Martins  
