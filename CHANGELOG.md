@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-05-03
+
+### Changed
+- Added `user` parameter (position 2 in both scripts, `-User` in PowerShell)
+- SSH and SCP now connect as `user@lpar` instead of relying on the local username
+- FTP no longer prompts for username — uses the `user` parameter; only the password is prompted
+- Parameter count increased from 6 to 7; local file path moves to position 7
+
 ## [1.2.0] - 2026-05-03
 
 ### Added

@@ -2,11 +2,12 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory, Position = 0)][string]$LparIp,
-    [Parameter(Mandatory, Position = 1)][string]$SshKeyPath,
-    [Parameter(Mandatory, Position = 2)][string]$Member,
-    [Parameter(Mandatory, Position = 3)][string]$Library,
-    [Parameter(Mandatory, Position = 4)][string]$SourceFile,
-    [Parameter(Mandatory, Position = 5)][string]$LocalFile
+    [Parameter(Mandatory, Position = 1)][string]$User,
+    [Parameter(Mandatory, Position = 2)][string]$SshKeyPath,
+    [Parameter(Mandatory, Position = 3)][string]$Member,
+    [Parameter(Mandatory, Position = 4)][string]$Library,
+    [Parameter(Mandatory, Position = 5)][string]$SourceFile,
+    [Parameter(Mandatory, Position = 6)][string]$LocalFile
 )
 
 $ErrorActionPreference = 'Stop'
@@ -28,12 +29,12 @@ $SshOpts       = @("-i", $SshKeyPath, "-o", "StrictHostKeyChecking=accept-new")
 Write-Host ""
 Write-Host "=== Option 1: SSH ==="
 
-Write-Host "Copying source to IFS: ${LparIp}:${IfsPath}"
-& scp @SshOpts $LocalFileFull "${LparIp}:${IfsPath}"
+Write-Host "Copying source to IFS: ${User}@${LparIp}:${IfsPath}"
+& scp @SshOpts $LocalFileFull "${User}@${LparIp}:${IfsPath}"
 
 Write-Host "Running CPYFRMSTMF on IBM i..."
 $CpyCmd = "system `"CPYFRMSTMF FROMSTMF('$IfsPath') TOMBR('/QSYS.LIB/$Library.LIB/$SourceFile.FILE/$Member.MBR') MBROPT(*REPLACE) STMFCCSID(*STMF) DBFCCSID(*FILE)`""
-& ssh @SshOpts $LparIp $CpyCmd
+& ssh @SshOpts "${User}@${LparIp}" $CpyCmd
 
 Write-Host "SSH: member $Member written to $Library/$SourceFile."
 
@@ -41,15 +42,14 @@ Write-Host "SSH: member $Member written to $Library/$SourceFile."
 Write-Host ""
 Write-Host "=== Option 2: FTP ==="
 
-$FtpUser       = Read-Host "FTP Username"
-$FtpPassSecure = Read-Host "FTP Password" -AsSecureString
+$FtpPassSecure = Read-Host "FTP Password for $User" -AsSecureString
 $FtpPass       = [System.Net.NetworkCredential]::new('', $FtpPassSecure).Password
 
 $TempScript = [System.IO.Path]::GetTempFileName()
 try {
     @"
 open $LparIp
-$FtpUser
+$User
 $FtpPass
 quote SITE NAMEFMT 0
 put $LocalFileFull $Library/$SourceFile.$Member

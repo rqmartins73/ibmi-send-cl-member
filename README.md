@@ -33,18 +33,18 @@ Scripts to upload a source member into any source physical file on an IBM i LPAR
 ### Bash
 
 ```bash
-./send_cl_member.sh <lpar-ip> <ssh-key-path> <member-name> <library> <source-file> <local-file>
+./send_cl_member.sh <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file>
 ```
 
 ### PowerShell
 
 ```powershell
 # Named parameters
-.\send_cl_member.ps1 -LparIp <lpar-ip> -SshKeyPath <ssh-key-path> -Member <member-name> `
+.\send_cl_member.ps1 -LparIp <lpar-ip> -User <user> -SshKeyPath <ssh-key-path> -Member <member-name> `
     -Library <library> -SourceFile <source-file> -LocalFile <local-file>
 
 # Positional (same order as Bash)
-.\send_cl_member.ps1 <lpar-ip> <ssh-key-path> <member-name> <library> <source-file> <local-file>
+.\send_cl_member.ps1 <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file>
 ```
 
 > On Windows, if the execution policy blocks the script, run once:
@@ -55,11 +55,12 @@ Scripts to upload a source member into any source physical file on an IBM i LPAR
 | # | Bash positional | PowerShell named | Description | Example |
 |---|-----------------|------------------|-------------|---------|
 | 1 | `lpar-ip` | `-LparIp` | IP address or hostname of the IBM i LPAR | `192.168.1.10` |
-| 2 | `ssh-key-path` | `-SshKeyPath` | Path to the SSH private key | `~/.ssh/id_rsa` |
-| 3 | `member-name` | `-Member` | Name of the member to create/replace | `MYPGM` |
-| 4 | `library` | `-Library` | IBM i library containing the source physical file | `MYLIB` |
-| 5 | `source-file` | `-SourceFile` | Source physical file name on IBM i | `QCLSRC` |
-| 6 | `local-file` | `-LocalFile` | Path to the local source file to upload | `/home/user/mypgm.cl` |
+| 2 | `user` | `-User` | IBM i user profile for SSH and FTP | `RQMARTINS` |
+| 3 | `ssh-key-path` | `-SshKeyPath` | Path to the SSH private key | `~/.ssh/id_rsa` |
+| 4 | `member-name` | `-Member` | Name of the member to create/replace | `MYPGM` |
+| 5 | `library` | `-Library` | IBM i library containing the source physical file | `MYLIB` |
+| 6 | `source-file` | `-SourceFile` | Source physical file name on IBM i | `QCLSRC` |
+| 7 | `local-file` | `-LocalFile` | Path to the local source file to upload | `/home/user/mypgm.cl` |
 
 ### Examples
 
@@ -67,29 +68,29 @@ Send a CL member to `QCLSRC` in library `POWERHA`:
 
 ```bash
 # Bash
-./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa MYPGM POWERHA QCLSRC /home/rqmartins/mypgm.cl
+./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa MYPGM POWERHA QCLSRC /home/rqmartins/mypgm.cl
 ```
 ```powershell
 # PowerShell
-.\send_cl_member.ps1 192.168.1.10 C:\Users\rqmartins\.ssh\id_rsa MYPGM POWERHA QCLSRC C:\src\mypgm.cl
+.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa MYPGM POWERHA QCLSRC C:\src\mypgm.cl
 ```
 
 Send an RPG member to `QRPGLESRC` in library `BLUEXLIB`:
 
 ```bash
-./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa SALESRPT BLUEXLIB QRPGLESRC /home/rqmartins/salesrpt.rpgle
+./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa SALESRPT BLUEXLIB QRPGLESRC /home/rqmartins/salesrpt.rpgle
 ```
 ```powershell
-.\send_cl_member.ps1 192.168.1.10 C:\Users\rqmartins\.ssh\id_rsa SALESRPT BLUEXLIB QRPGLESRC C:\src\salesrpt.rpgle
+.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa SALESRPT BLUEXLIB QRPGLESRC C:\src\salesrpt.rpgle
 ```
 
 Send a CLLE member to a custom source file in a different library:
 
 ```bash
-./send_cl_member.sh 192.168.1.10 ~/.ssh/id_rsa BACKUP PRODLIB CLLESRC /home/rqmartins/backup.clle
+./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa BACKUP PRODLIB CLLESRC /home/rqmartins/backup.clle
 ```
 ```powershell
-.\send_cl_member.ps1 192.168.1.10 C:\Users\rqmartins\.ssh\id_rsa BACKUP PRODLIB CLLESRC C:\src\backup.clle
+.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa BACKUP PRODLIB CLLESRC C:\src\backup.clle
 ```
 
 ---
@@ -99,7 +100,7 @@ Send a CLLE member to a custom source file in a different library:
 ### Validation
 
 Before doing anything, both scripts:
-- Check that all 6 arguments are provided, and exit with usage instructions if not.
+- Check that all 7 arguments are provided, and exit with usage instructions if not.
 - Verify the SSH key file exists at the given path.
 - Verify the local source file exists at the given path.
 
@@ -185,8 +186,8 @@ If the member does not exist yet, IBM i will create it automatically in both cas
 ## Security notes
 
 - The SSH key is never exposed in plain text — it is passed via the `-i` flag to `ssh`/`scp`.
-- **Bash:** FTP password is read with `read -s` (silent mode), not echoed to the terminal.
-- **PowerShell:** FTP password is read with `Read-Host -AsSecureString`, stored in memory as a `SecureString`, converted to plain text only to write the temp FTP script, then nulled out immediately after the FTP session ends.
+- **Bash:** FTP password is read with `read -s` (silent mode), not echoed to the terminal. The username is taken from the `user` parameter — not prompted.
+- **PowerShell:** FTP password is read with `Read-Host -AsSecureString`, stored in memory as a `SecureString`, converted to plain text only to write the temp FTP script, then nulled out immediately after the FTP session ends. The username is taken from `-User` — not prompted.
 - The FTP temp script is created in the current user's temp directory; on a properly configured system only that user has read access.
 - FTP transmits credentials in plain text over the network. If this is a concern, prefer Option 1 (SSH) exclusively.
 - `StrictHostKeyChecking=accept-new` is used for SSH: automatically trusts the host on first connection, refuses if the host key changes later (protection against MITM after initial trust).
