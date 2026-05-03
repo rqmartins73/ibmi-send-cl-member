@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-05-03
+
+### Added
+- `send_cl_member.ps1`: PowerShell equivalent of the Bash script for Windows
+  - Same 6 parameters, same logic, compatible with Windows OpenSSH (`scp`/`ssh`)
+  - FTP option writes a temporary script file and runs `ftp.exe -s:<file>`; temp file is deleted in a `finally` block regardless of outcome
+  - Password handled as `SecureString` (`Read-Host -AsSecureString`), nulled after use
+  - `#Requires -Version 5.1` guard; named and positional parameter binding
+- README: Windows requirements, PowerShell usage, named parameter table, Windows-specific troubleshooting entries, PowerShell FTP security notes
+
 ## [1.1.0] - 2026-05-03
 
 ### Changed
