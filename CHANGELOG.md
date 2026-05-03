@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.5.0] - 2026-05-03
+
+### Changed
+- `send_cl_member.sh`: all 7 required parameters are now prompted interactively if omitted, matching the behaviour of the PowerShell `[Parameter(Mandatory)]` equivalent
+
 ## [1.4.0] - 2026-05-03
 
 ### Added
