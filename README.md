@@ -36,6 +36,19 @@ Scripts to upload a source member into any source physical file on an IBM i LPAR
 ./send_cl_member.sh <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file> [method]
 ```
 
+Any of the first 7 parameters can be omitted — the script will prompt for them interactively. Running with no arguments prompts for everything:
+
+```
+$ send_cl_member.sh
+LPAR IP or hostname:      172.26.2.5
+IBM i user profile:       RQMARTINS
+SSH key path:             ~/.ssh/id_rsa
+Member name:              MYPGM
+Library:                  POWERHA
+Source physical file:     QCLSRC
+Local file path:          ~/src/mypgm.cl
+```
+
 ### PowerShell
 
 ```powershell
@@ -96,7 +109,7 @@ Send via both methods:
 ### Validation
 
 Before doing anything, both scripts:
-- Check that all 7 arguments are provided, and exit with usage instructions if not.
+- Prompt interactively for any of the 7 required parameters that were not passed on the command line (`send_cl_member.sh`) or not provided via PowerShell's mandatory parameter prompt (`send_cl_member.ps1`).
 - Verify the SSH key file exists at the given path.
 - Verify the local source file exists at the given path.
 
