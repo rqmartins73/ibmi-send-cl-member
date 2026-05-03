@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-05-03
+
+### Added
+- Optional `method` parameter (Bash position 8, PowerShell `-Method`) with values `ssh` (default), `ftp`, or `both`
+- Scripts now run only the selected transfer method instead of always running both
+- PowerShell: `-Method` uses `[ValidateSet]` — invalid values are rejected by PowerShell before the script body runs
+- Bash: explicit `case` guard rejects any value other than `ssh`, `ftp`, or `both`
+
 ## [1.3.0] - 2026-05-03
 
 ### Changed

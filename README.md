@@ -33,7 +33,7 @@ Scripts to upload a source member into any source physical file on an IBM i LPAR
 ### Bash
 
 ```bash
-./send_cl_member.sh <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file>
+./send_cl_member.sh <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file> [method]
 ```
 
 ### PowerShell
@@ -41,10 +41,10 @@ Scripts to upload a source member into any source physical file on an IBM i LPAR
 ```powershell
 # Named parameters
 .\send_cl_member.ps1 -LparIp <lpar-ip> -User <user> -SshKeyPath <ssh-key-path> -Member <member-name> `
-    -Library <library> -SourceFile <source-file> -LocalFile <local-file>
+    -Library <library> -SourceFile <source-file> -LocalFile <local-file> [-Method <method>]
 
 # Positional (same order as Bash)
-.\send_cl_member.ps1 <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file>
+.\send_cl_member.ps1 <lpar-ip> <user> <ssh-key-path> <member-name> <library> <source-file> <local-file> [method]
 ```
 
 > On Windows, if the execution policy blocks the script, run once:
@@ -52,45 +52,41 @@ Scripts to upload a source member into any source physical file on an IBM i LPAR
 
 ### Parameters
 
-| # | Bash positional | PowerShell named | Description | Example |
-|---|-----------------|------------------|-------------|---------|
-| 1 | `lpar-ip` | `-LparIp` | IP address or hostname of the IBM i LPAR | `192.168.1.10` |
-| 2 | `user` | `-User` | IBM i user profile for SSH and FTP | `RQMARTINS` |
-| 3 | `ssh-key-path` | `-SshKeyPath` | Path to the SSH private key | `~/.ssh/id_rsa` |
-| 4 | `member-name` | `-Member` | Name of the member to create/replace | `MYPGM` |
-| 5 | `library` | `-Library` | IBM i library containing the source physical file | `MYLIB` |
-| 6 | `source-file` | `-SourceFile` | Source physical file name on IBM i | `QCLSRC` |
-| 7 | `local-file` | `-LocalFile` | Path to the local source file to upload | `/home/user/mypgm.cl` |
+| # | Bash positional | PowerShell named | Required | Description | Example |
+|---|-----------------|------------------|----------|-------------|---------|
+| 1 | `lpar-ip` | `-LparIp` | Yes | IP address or hostname of the IBM i LPAR | `192.168.1.10` |
+| 2 | `user` | `-User` | Yes | IBM i user profile for SSH and FTP | `RQMARTINS` |
+| 3 | `ssh-key-path` | `-SshKeyPath` | Yes | Path to the SSH private key | `~/.ssh/id_rsa` |
+| 4 | `member-name` | `-Member` | Yes | Name of the member to create/replace | `MYPGM` |
+| 5 | `library` | `-Library` | Yes | IBM i library containing the source physical file | `MYLIB` |
+| 6 | `source-file` | `-SourceFile` | Yes | Source physical file name on IBM i | `QCLSRC` |
+| 7 | `local-file` | `-LocalFile` | Yes | Path to the local source file to upload | `/home/user/mypgm.cl` |
+| 8 | `method` | `-Method` | No | Transfer method: `ssh` (default), `ftp`, or `both` | `ssh` |
 
 ### Examples
 
-Send a CL member to `QCLSRC` in library `POWERHA`:
-
+Send via SSH only (default — omitting method):
 ```bash
-# Bash
 ./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa MYPGM POWERHA QCLSRC /home/rqmartins/mypgm.cl
 ```
 ```powershell
-# PowerShell
 .\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa MYPGM POWERHA QCLSRC C:\src\mypgm.cl
 ```
 
-Send an RPG member to `QRPGLESRC` in library `BLUEXLIB`:
-
+Send via FTP only:
 ```bash
-./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa SALESRPT BLUEXLIB QRPGLESRC /home/rqmartins/salesrpt.rpgle
+./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa MYPGM POWERHA QCLSRC /home/rqmartins/mypgm.cl ftp
 ```
 ```powershell
-.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa SALESRPT BLUEXLIB QRPGLESRC C:\src\salesrpt.rpgle
+.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa MYPGM POWERHA QCLSRC C:\src\mypgm.cl -Method ftp
 ```
 
-Send a CLLE member to a custom source file in a different library:
-
+Send via both methods:
 ```bash
-./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa BACKUP PRODLIB CLLESRC /home/rqmartins/backup.clle
+./send_cl_member.sh 192.168.1.10 RQMARTINS ~/.ssh/id_rsa MYPGM POWERHA QCLSRC /home/rqmartins/mypgm.cl both
 ```
 ```powershell
-.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa BACKUP PRODLIB CLLESRC C:\src\backup.clle
+.\send_cl_member.ps1 192.168.1.10 RQMARTINS C:\Users\rqmartins\.ssh\id_rsa MYPGM POWERHA QCLSRC C:\src\mypgm.cl -Method both
 ```
 
 ---
